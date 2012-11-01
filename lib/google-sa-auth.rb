@@ -5,7 +5,7 @@ require 'google-sa-auth/token'
 require 'google-sa-auth/client'
 
 class GoogleSAAuth
-  attr_accessor :claim_set, :pkcs12
+  attr_accessor :claim_set, :pkcs12, :token
   def initialize(args)
     # Symbolize keys.
     args = args.inject({}){|item,(k,v)| item[k.to_sym] = v; item}
@@ -45,9 +45,14 @@ class GoogleSAAuth
 
   def auth_token
     # Make sure this token isn't expired.
-    @token = nil if @token.nil? || @token.expired?
-    @token ||= GoogleSAAuth::Token.new(jwt)
-    @token.token
+    self.token = nil if self.token.nil? || self.token.expired?
+    self.token ||= GoogleSAAuth::Token.new(jwt)
+    self.token
+  end
+
+  def token_string
+    # Return only the string for the token.
+    auth_token.token
   end
 
   def jwt
