@@ -1,0 +1,65 @@
+require 'google-jwt'
+require 'curb-fu'
+require 'google-sa-auth/scope'
+require 'google-sa-auth/token'
+require 'google-sa-auth/client'
+
+class GoogleSAAuth
+  attr_accessor :claim_set, :pkcs12
+  def initialize(args)
+    # Symbolize keys.
+    args = args.inject({}){|item,(k,v)| item[k.to_sym] = v; item}
+
+    # Remove unknown keys and make sure we have all the required keys.
+    args.delete_if {|k,v| ![:email_address, :scope, :key, :password, :audience].include?(k)}
+    [:email_address, :scope, :key].each do |required|
+      raise RuntimeError, "Missing required argument key #{required}" unless args[required]
+    end
+
+    # Setup default password and audience.
+    args[:password] ||= 'notasecret'
+    args[:audience] ||= 'https://accounts.google.com/o/oauth2/token'
+
+    # Create the claim set.
+    self.claim_set = {:iss => args[:email_address], :aud => args[:audience]}
+
+    # Determine the scope.
+    if args[:scope].class == String
+      self.claim_set[:scope] = GoogleSAAuth::Scope.new(args[:scope]).url
+    elsif args[:scope].class == Array
+      scopes = args[:scope].each.collect {|scope| GoogleSAAuth::Scope.new(scope).url}
+      self.claim_set[:scope] = scopes.join(' ')
+    elsif args[:scope].class == Hash
+      # Specify extension, e.g. => {:fusiontables => 'readonly'}
+      scopes = []
+      args[:scope].each do |scope,extension|
+        url = GoogleSAAuth::Scope.new(scope).by_extension(extension)
+        scopes.push(url) unless url.nil?
+      end
+      self.claim_set[:scope] = scopes.join(' ')
+    end
+
+    # Set other attributes.
+    self.pkcs12 = {:key => args[:key], :password => args[:password]}
+  end
+
+  def auth_token
+    # Make sure this token isn't expired.
+    @token = nil if @token.nil? || @token.expired?
+    @token ||= GoogleSAAuth::Token.new(jwt)
+    @token.token
+  end
+
+  def jwt
+    # Make sure the jwt isn't already expired.
+    @json_web_token = nil if @json_web_token.nil? || Time.now.to_i >= @json_web_token.claim_set[:exp]
+
+    # (Re)create the JSON web token.
+    @json_web_token ||= GoogleJWT.new(
+      self.claim_set,
+      self.pkcs12[:key],
+      self.pkcs12[:password]
+    )
+    @json_web_token
+  end
+end
