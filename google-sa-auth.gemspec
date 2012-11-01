@@ -16,4 +16,10 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
+
+  s.add_dependency 'rspec'
+  s.add_dependency 'bundler'
+  s.add_dependency 'curb-fu'
+  s.add_dependency 'google-jwt'
+  s.add_dependency 'json'
 end
