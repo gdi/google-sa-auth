@@ -41,6 +41,10 @@ class GoogleSAAuth
 
     # Set other attributes.
     self.pkcs12 = {:key => args[:key], :password => args[:password]}
+
+    # Get our authorization.
+    auth_token
+    self
   end
 
   def auth_token
