@@ -25,15 +25,29 @@ class GoogleSAAuth
 
     # Determine the scope.
     if args[:scope].class == String
-      self.claim_set[:scope] = GoogleSAAuth::Scope.new(args[:scope]).url
+      if args[:scope] =~ /^http/i
+        self.claim_set[:scope] = args[:scope]
+      else
+        self.claim_set[:scope] = GoogleSAAuth::Scope.new(args[:scope]).url
+      end
     elsif args[:scope].class == Array
-      scopes = args[:scope].each.collect {|scope| GoogleSAAuth::Scope.new(scope).url}
+      scopes = args[:scope].each.collect do |scope|
+        if scope =~ /http/i
+          scope
+        else
+          GoogleSAAuth::Scope.new(scope).url
+        end
+      end
       self.claim_set[:scope] = scopes.join(' ')
     elsif args[:scope].class == Hash
       # Specify extension, e.g. => {:fusiontables => 'readonly'}
       scopes = []
       args[:scope].each do |scope,extension|
-        url = GoogleSAAuth::Scope.new(scope).by_extension(extension)
+        if scope =~ /^http/i
+          url = scope
+        else
+          url = GoogleSAAuth::Scope.new(scope).by_extension(extension)
+        end
         scopes.push(url) unless url.nil?
       end
       self.claim_set[:scope] = scopes.join(' ')
