@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "google-sa-auth"
-  s.version     = "0.0.3"
+  s.version     = "0.0.4"
   s.authors     = ["Jon Durbin"]
   s.email       = ["jond@greenviewdata.com"]
   s.homepage    = "https://github.com/gdi/google-sa-auth"
