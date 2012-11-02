@@ -1,5 +1,7 @@
 class GoogleSAAuth
   class Scope
+    $KNOWN_APIS = {}
+
     attr_accessor :scope_urls, :api_info
     def initialize(name)
       get_api_info(name.to_s)
@@ -32,6 +34,8 @@ class GoogleSAAuth
 
   private
     def known_apis
+      return $KNOWN_APIS unless $KNOWN_APIS.empty?
+
       # Get the list of known APIs using the Google's API Discovery
       response =  GoogleSAAuth::Client.run(
         :uri => 'https://www.googleapis.com/discovery/v1/apis',
@@ -45,6 +49,7 @@ class GoogleSAAuth
       result = JSON.parse(response.body)
       apis = {}
       result['items'].each {|item| apis[item['name']] = item}
+      $KNOWN_APIS = apis
       apis
     end
 
